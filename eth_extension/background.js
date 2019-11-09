@@ -57,7 +57,8 @@ chrome.browserAction.onClicked.addListener(async (tab) => {
 let assets = []
 
 function pingAPI(){
-    fetch('http://127.0.0.1:80/get_rules')
+	dev_endpoint="http://www.truthpipes.com:5000/get_rules"; // Can be local too
+    fetch(dev_endpoint)
     .then((resp) => resp.json()) // Transform the data into json
     .then(function(data) {
     	    console.log("GOT RESPONSE: "+JSON.stringify(data));
@@ -92,7 +93,7 @@ pingAPI();
 
 
 function getURL(){
-       	const address = "0x5286506180FEc157042EA1E30972E929a275710b"; //JC
+       	const address = "0x8c17eab5d444e80da64823c455ea608f6588c591"; //ResilientEndpoint mainnet
 	    const contract = new web3.eth.Contract(abi, address)
         var promise1= contract.methods.url().call((err, result) => { return console.log("web3 response for URL: "+result); })
         return promise1
@@ -121,8 +122,21 @@ function getURL(){
 //# COMBO:  Use web3 response to query api endpoint
 //######################
 
+//# eth string buffered with 000 assume 4 digit port
+//######################
+function eth_string_patch(url_endpoint0000) {
+	// 
+	var url_endpoint=url_endpoint0000.replace(/000+$/,"000");
+	console.log("NOW: "+url_endpoint);
+	return url_endpoint
+}
 
 function getRules(url_endpoint){
+	console.log("AT get rules...");
+	
+	url_endpoint=eth_string_patch(url_endpoint);
+	console.log("With: "+url_endpoint);
+
 	var fetch_promise=fetch('http://'+url_endpoint+'/get_rules');
 	
 	return fetch_promise
