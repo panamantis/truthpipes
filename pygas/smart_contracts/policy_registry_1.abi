@@ -1,0 +1,235 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_displayName",
+				"type": "string"
+			},
+			{
+				"name": "_imageUrl",
+				"type": "string"
+			},
+			{
+				"name": "_wiki",
+				"type": "string"
+			}
+		],
+		"name": "createPolicy",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "setMythicalPolicy",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_imageUrl",
+				"type": "string"
+			}
+		],
+		"name": "updatePolicyImage",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_displayName",
+				"type": "string"
+			}
+		],
+		"name": "updatePolicyName",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_wiki",
+				"type": "string"
+			}
+		],
+		"name": "updatePolicyWiki",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "displayName",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "imageUrl",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "wiki",
+				"type": "string"
+			}
+		],
+		"name": "NewPolicy",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "displayName",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "imageUrl",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "wiki",
+				"type": "string"
+			}
+		],
+		"name": "UpdatedPolicy",
+		"type": "event"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "getPolicy",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			},
+			{
+				"name": "",
+				"type": "string"
+			},
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "ownerToPolicy",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "policies",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "displayName",
+				"type": "string"
+			},
+			{
+				"name": "imageUrl",
+				"type": "string"
+			},
+			{
+				"name": "wiki",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "policyToOwner",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
