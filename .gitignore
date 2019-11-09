@@ -20,3 +20,5 @@ redirect_cache.dat
 uploads/*
 .mozilla*
 .cache
+eth_extension/node_modules
+*.map
