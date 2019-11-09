@@ -7,7 +7,6 @@ redirect_cache.dat
 .project
 .pydevproject
 *.sqlite
-*.html
 *.log
 *.out
 *.swo
