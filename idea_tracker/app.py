@@ -47,7 +47,7 @@ def remove_private_info(phrase):
 
 def filter_displayed(phrase):
     if len(re.split(r' ',phrase))<3:
-        print (".. skipping short feedback: "+str(phrase))
+#D#        print (".. skipping short feedback: "+str(phrase))
         phrase=''
     phrase=censor_phrase(phrase)
     
@@ -130,4 +130,4 @@ def updateTodo(item_id):
     return jsonify(data)
 
 # run Flask app in debug mode
-app.run(debug=True)
+app.run(host="0.0.0.0",port=80,debug=True)
