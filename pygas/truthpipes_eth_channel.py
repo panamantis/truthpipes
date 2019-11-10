@@ -1,6 +1,7 @@
 import os
 import time
 import threading
+import binascii
 
 from eth_model import Ethereum_Model
 from eth_model import get_web3
@@ -17,8 +18,8 @@ def load_truthpipes_contract_meta(branch=['ResilientEndpoint']):
     meta={}
     
     if 'PolicyRegistry' in branch:
-        meta['contractAddress']='0x605a4fbd92f5930513f7950abd93e83c78ff2dde' #PolicyRegistry
-        meta['abi_filename']=LOCAL_DIR+'/smart_contracts/policy_registry_1.abi'
+        meta['contractAddress']='0x5EC9E4c318b72d72F70355c04Fc889a84a22A884' #2
+        meta['abi_filename']=LOCAL_DIR+'/smart_contracts/policy_registry_2.abi'
 
     if 'ResilientEndpoint' in branch:
         meta['contractAddress']='0x8c17eab5d444e80da64823c455ea608f6588c591' #ResilientEndpoint
@@ -67,6 +68,12 @@ def alg_mint_rule_text_background(the_text):
     print ("Done function")
     return
 
+def generate_dummy_address():
+    random_hex=binascii.b2a_hex(os.urandom(5)) #15->32  5->10 chars
+    #flex_address='0x0000000000000000000000000000000000000000'
+    flex_address='0x000000000000000000000000000000'+random_hex.decode('utf-8')
+    return flex_address
+
 def alg_mint_rule_text(the_text):
     #** for now to single account!!
     if len(the_text)>300:
@@ -74,15 +81,30 @@ def alg_mint_rule_text(the_text):
         the_text=the_text[:300]
 
     Eth,Contract=common_load_PolicyRegistry()
-    b=['just_one_rule_dev']
-    if 'just_one_rule_dev' in b:
+
+    #admin_address='0x3dd8a3d860fA7fF5b664b96846D3afC3049cfF0D'
+
+    FLAG_ALWAYS_CREATE=True
+
+    if FLAG_ALWAYS_CREATE:
+        ## Generate random address to store info
+        address=generate_dummy_address()
+
+        params=[]
+        params+=[(address,'address')] #name string
+        params+=[('n1','string')] #name string
+        params+=[('i1','string')] #image string/url
+        params+=[(the_text,'string')] #wiki string/url
+        txn_receipt=Eth.run_function(Contract,'createPolicyOpen',params=params)
+
+    else:
         #UPDATE OR CREATE?
         ## Local helper function to see if any value at address (use create or update)
         address=Eth.active_account
         response_list=Eth.run_function(Contract,'getPolicy',params=[(address,'address')],is_call=True)
         if response_list[0]: is_exists=True
         else: is_exists=False
-
+    
         if not is_exists:
             #** see create in test_mint_comment()
             params=[]
@@ -90,12 +112,11 @@ def alg_mint_rule_text(the_text):
             params+=[('sample_url_1','string')] #image string/url
             params+=[(the_text,'string')] #wiki string/url
             txn_receipt=Eth.run_function(Contract,'createPolicy',params=params)
-
+    
         else: ## Update
             params=[(the_text,'string')] #name string
             # updatePolicyWiki(string _wiki) public {
             Eth.run_function(Contract,'updatePolicyWiki',params=params)
-
 
     return
 
@@ -191,6 +212,7 @@ def test_run_in_background():
     return
 
 
+
 if __name__=='__main__':
     branches=['test_set_url']
     branches=['test_get_url']
@@ -199,6 +221,7 @@ if __name__=='__main__':
     branches=['test_run_in_background']
 
     branches=['test_mint_comment']
+    branches=['generate_dummy_address']
 
     for b in branches:
         globals()[b]()
