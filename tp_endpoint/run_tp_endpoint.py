@@ -32,6 +32,10 @@ def hello_endpoint():
 @app.route('/get_rules')
 def get_rules_endpoint(*args,**kwargs):
     global Rules
+    auto_refresh_on_every_grab=True
+    if auto_refresh_on_every_grab:
+        Rules=Rules_Interface()
+
     dd={}
     dd['rules_list']=['a','b']
     dd['rules_list']+=Rules.rules_list()

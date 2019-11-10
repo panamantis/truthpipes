@@ -59,6 +59,24 @@ class Rules_Interface(object):
         self.load_rules_from_dummy()
         self.load_rules_from_webui_flatfile()
         self.load_rules_from_ethereum()
+
+        ## Auto augment rules
+        # -- ie/ pull out all mentioned asins
+        aug_rules=[]
+        arules={} #list rules
+        arules['highlight_amazon']=[]
+
+        for rule in self.rules_records:
+            new_rules=auto_rule_augmentation(rule)
+            for rule in new_rules:
+                #Combine if multiple amazons
+                if 'highlight_amazon' in rule:
+                    arules['highlight_amazon']+=rule['highlight_amazon'] #list append
+                else:
+                    aug_rules+=[rule]
+
+        aug_rules+=[arules]
+        self.rules_records=aug_rules
         return
     
     def load_blockchain_rules(self):
@@ -98,7 +116,7 @@ def auto_rule_augmentation(rule):
         for mention in re.findall(r'\bB[\dA-Z]+',content):
             amazon_asins+=[mention]
             
-    print ("[debug assins: "+str(amazon_asins))
+#D    print ("[debug assins: "+str(amazon_asins))
     if amazon_asins:
         nrule={}
         nrule['highlight_amazon']=amazon_asins
