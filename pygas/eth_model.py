@@ -15,6 +15,9 @@ from web3 import Web3, HTTPProvider, IPCProvider
 
 print ("Using version (expect 4.9.2): "+str(web3.__version__))
 
+GLOBAL_GAS_PRICE=1.2
+GLOBAL_GAS_LIMIT=1728712
+
 
 def get_web3(node_name='',verbose=False):
 
@@ -33,10 +36,18 @@ def get_web3(node_name='',verbose=False):
 
 def string_to_bytes32(data):
     #Basic for now for string encoding
-    if len(data) > 32:
+    CLIP_AT_32=False
+    PAD_RIGHT_ZEROS=False
+
+
+    if CLIP_AT_32 and len(data) > 32:
         myBytes32 = data[:32]
     else:
-        myBytes32 = data.ljust(32, '0')
+        #AUTO BUFFER
+        if PAD_RIGHT_ZEROS:
+            myBytes32 = data.ljust(32, '0')
+        else:
+            myBytes32 = data
     return bytes(myBytes32, 'utf-8')
 
 
@@ -57,6 +68,8 @@ class Ethereum_Model(object):
         if 'system_key' in branch:
             self.active_account=os.environ['ETH_ACCOUNT']
             self.active_key=os.environ['ETH_KEY']
+            
+#            self.active_checksum_account=self.web3.toChecksumAddress(
             print ("[info] ethereum account active: "+self.active_account)
         return
 
@@ -106,60 +119,86 @@ class Ethereum_Model(object):
         print ("GAS wei: "+str(pp))
         return pp
     
-    def run_function(self,Contract,params=[],verbose=True):
+
+
+    def run_function(self,Contract,function_name,params=[],verbose=True,is_call=False):
+        #Support for multiple parameters
+        #If is_call then don't need to sign, can just call
+
+        global GLOBAL_GAS_PRICE
+        global GLOBAL_GAS_LIMIT
+
         if not self.active_account:stopp=no_wallet
 
-        gas_limit=1728712
-        gas_price=Web3.toWei('1.2', 'gwei')
+        gas_limit=GLOBAL_GAS_LIMIT
+        gas_price=Web3.toWei(str(GLOBAL_GAS_PRICE), 'gwei')
         if verbose:
             print ("[eth] gas price for function run: "+str(gas_price))
 
         # variable, value, type
         #transaction = contract.functions.function_Name(params)
         
-        function_name=params[0]
-        vvalue=params[1]
-        the_type=params[2]
+        vvalues=[]
         
-        print ("[debug] running function: "+str(function_name)+" setting value: "+str(vvalue))
+        for param in params:
+            vvalue=param[0]
+            the_type=param[1]
         
-        if the_type=='string':
-            vvalue=string_to_bytes32(vvalue) #max length -- encode
-        else:
-            a=pending_setup
+            if the_type=='string':
+                vvalue=string_to_bytes32(vvalue) #max length -- encode
+            elif the_type=='address':
+                vvalue=self.web3.toChecksumAddress(vvalue)
+            else: a=pending_setup
+            vvalues+=[vvalue]
+
+        print ("[debug] running function: "+str(function_name)+" setting values: "+str(vvalues))
             
         ##1/  Create function object
         #https://github.com/ethereum/web3.py/blob/master/web3/contract.py?
         #function_obj = Contract.functions.setUrl(url) #setUrl object
         the_function=Contract.get_function_by_name(function_name)
-        function_obj=the_function(vvalue)
-    
-        nonce = self.web3.eth.getTransactionCount(self.active_account) #prevents double spend
+        function_obj=the_function(*vvalues) #Convert list to arg1,arg2,
+        
+        if is_call: #Free
+            response_list=function_obj.call()
+            if verbose:
+                print ("Got call response: "+str(response_list))
+            response=response_list
 
-        transaction_dict=function_obj.buildTransaction(
-            {
-                'nonce': nonce,
-                'from': self.active_account,
-                'gas': gas_limit,
-                'gasPrice': gas_price
-            }
-            )
+        else: #Transaction
+            nonce = self.web3.eth.getTransactionCount(self.active_account) #prevents double spend
     
-        signed=self.web3.eth.account.signTransaction(transaction_dict, self.active_key)
-    
-        print ("[transaction ready and signed]")
+            transaction_dict=function_obj.buildTransaction(
+                {
+                    'nonce': nonce,
+                    'from': self.active_account,
+                    'gas': gas_limit,
+                    'gasPrice': gas_price
+                }
+                )
         
-        ## send
-        print ("Sending transaction...")
-        txn_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction) 
-        print ("Waiting for transaction to resolve...")
-        txn_receipt = self.web3.eth.waitForTransactionReceipt(txn_hash)
-        
-        print ("Got response: "+str(txn_receipt))
-        """AttributeDict({'logs': [], 'contractAddress': None, 'to': '0x8c17eab5d444e80da64823c455ea608f6588c591', 'cumulativeGasUsed': 6165390, 'logsBloom': HexBytes('0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'), 'blockHash': HexBytes('0x5888f2af9d8fba7bcffbbe362d1980ffffb53cb633119ab502d4ac6191cc026a'), 'from': '0x3dd8a3d860fa7ff5b664b96846d3afc3049cff0d', 'status': 1, 'blockNumber': 8903958, 'transactionIndex': 6, 'transactionHash': HexBytes('0x8535fecf36ebcd3756af03d123fd148d7bb453c841717e012e3a33d947cc9946'), 'gasUsed': 65300})"""
+            signed=self.web3.eth.account.signTransaction(transaction_dict, self.active_key)
     
+            print ("[transaction ready and signed]")
+            
+            ## send
+            print ("Sending transaction...")
+            txn_hash = self.web3.eth.sendRawTransaction(signed.rawTransaction) 
+            print ("Waiting for transaction to resolve...")
+            txn_receipt = self.web3.eth.waitForTransactionReceipt(txn_hash)
+            
+            print ("Got response: "+str(txn_receipt))
+            """AttributeDict({'logs': [], 'contractAddress': None, 'to': '0x8c17eab5d444e80da64823c455ea608f6588c591', 'cumulativeGasUsed': 6165390, 'logsBloom': HexBytes('0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'), 'blockHash': HexBytes('0x5888f2af9d8fba7bcffbbe362d1980ffffb53cb633119ab502d4ac6191cc026a'), 'from': '0x3dd8a3d860fa7ff5b664b96846d3afc3049cff0d', 'status': 1, 'blockNumber': 8903958, 'transactionIndex': 6, 'transactionHash': HexBytes('0x8535fecf36ebcd3756af03d123fd148d7bb453c841717e012e3a33d947cc9946'), 'gasUsed': 65300})"""
+            status=txn_receipt['status'] #1 good
+            gasUsed=txn_receipt['gasUsed']
+            
+            if status:
+                print ("[info] transaction good!")
+            else:
+                print ("[info] transaction BAAAD!")
+            response=txn_receipt
     
-        return
+        return response
 
     
     
@@ -168,4 +207,8 @@ class Ethereum_Model(object):
     #https://web3py.readthedocs.io/en/latest/contracts.html#web3.contract.ContractFunction.call
     
 
+        
+        
+        
+        
         

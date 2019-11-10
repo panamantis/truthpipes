@@ -4,7 +4,9 @@ import json
 
 from utils import walk_directory
 
-#sys.path.insert(0,'../pyweb3')
+sys.path.insert(0,'../pygas')
+from truthpipes_eth_channel import alg_get_minted_rules
+
 #from truthpipes_service import alg_get_my_pointer_count
 
 #0v1# JC Nov  9, 2019  Base setup
@@ -21,6 +23,14 @@ class Rules_Interface(object):
         return
     
     def load_rules_from_ethereum(self):
+        print ("[debug] fetching minted rules for ethereum...")
+        rule_texts=alg_get_minted_rules()
+        print ("[debug] done fetch")
+
+        for rule_text in rule_texts:
+            rule={}
+            rule['dummy_minted']=rule_text
+            self.rules_records+=[rule]
         return
 
     def load_rules_from_webui_flatfile(self):
@@ -124,8 +134,8 @@ def dev_rule_augmentation():
 
 
 if __name__=='__main__':
-    branches=['test_load_rules']
     branches=['dev_rule_augmentation']
+    branches=['test_load_rules']
     for b in branches:
         globals()[b]()
         

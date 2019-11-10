@@ -6,6 +6,9 @@ import json
 
 from profanityfilter import ProfanityFilter #pip install profanityfilter #https://github.com/areebbeigh/profanityfilter
 
+sys.path.insert(0,'../pygas')
+from truthpipes_eth_channel import alg_mint_rule_text
+
 
 #0v1# JC Nov  9, 2019
 
@@ -27,6 +30,14 @@ pusher = Pusher(
 
 LOCAL_DIR=os.path.join(os.path.dirname(__file__), ".")
 storage_filename=LOCAL_DIR+"/storage1.tsv"
+
+def local_mint_text(the_text):
+    ## Filter before
+    #** also clipped at 300
+    the_text=filter_displayed(the_text)
+    print ("Minting feedback to eth: "+str(the_text))
+    alg_mint_rule_text(the_text)
+    return
 
 def censor_phrase(phrase):
     global pf
@@ -109,6 +120,9 @@ def addTodo():
 #    dd['contact']=private_contact
     dict2storage(dd)
     
+    print ("[debug] calling mint add todo to ethereum")
+    local_mint_text(dd['value'])
+    
     return jsonify(data)
 
 # endpoint for deleting todo item
@@ -131,3 +145,8 @@ def updateTodo(item_id):
 
 # run Flask app in debug mode
 app.run(host="0.0.0.0",port=80,debug=True)
+
+
+
+
+
