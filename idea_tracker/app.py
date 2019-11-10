@@ -1,5 +1,7 @@
-import os
+import os,sys
 import re
+import threading
+
 from flask import Flask, render_template, request, jsonify
 from pusher import Pusher
 import json
@@ -31,12 +33,35 @@ pusher = Pusher(
 LOCAL_DIR=os.path.join(os.path.dirname(__file__), ".")
 storage_filename=LOCAL_DIR+"/storage1.tsv"
 
+BACKGROUND_MINTING=True
+
+def background_mint(the_text):
+    print ("[debug] calling mint in background (check finalization)")
+    mint_thread=threading.Thread(target=alg_mint_rule_text,args=[the_text])
+    mint_thread.start()
+    return
+
 def local_mint_text(the_text):
+    global BACKGROUND_MINTING
     ## Filter before
     #** also clipped at 300
     the_text=filter_displayed(the_text)
-    print ("Minting feedback to eth: "+str(the_text))
-    alg_mint_rule_text(the_text)
+
+    ONLY_MINT_AMAZON=True
+    if ONLY_MINT_AMAZON:
+        m=re.search(r'\b(B[\dA-Z]{5,20})',the_text)
+        if m:
+            amazon_asin=m.group(1)
+            print ("Minting AMAZON feedback to eth: "+str(amazon_asin))
+            if BACKGROUND_MINTING:
+                background_mint(amazon_asin)
+            else:
+                alg_mint_rule_text(amazon_asin)
+    else:
+        if BACKGROUND_MINTING:
+            alg_mint_rule_text(the_text)
+        else:
+            alg_mint_rule_text(the_text)
     return
 
 def censor_phrase(phrase):
@@ -121,7 +146,7 @@ def addTodo():
     dict2storage(dd)
     
     print ("[debug] calling mint add todo to ethereum")
-    local_mint_text(dd['value'])
+    local_mint_text(data['value'])
     
     return jsonify(data)
 

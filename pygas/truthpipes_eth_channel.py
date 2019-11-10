@@ -1,7 +1,10 @@
 import os
+import time
+import threading
 
 from eth_model import Ethereum_Model
 from eth_model import get_web3
+
 
 #0v1# JC Nov  9, 2019  
 
@@ -52,6 +55,18 @@ def alg_get_minted_rules():
      
     return rules_texts
 
+def alg_dummy_wait():
+    print ("waiting 5...")
+    time.sleep(5)
+    return
+
+def alg_mint_rule_text_background(the_text):
+    mint_thread=threading.Thread(target=alg_dummy_wait)
+    #mint_thread=threading.Thread(target=alg_mint_rule_text,args=(the_text))
+    mint_thread.start()
+    print ("Done function")
+    return
+
 def alg_mint_rule_text(the_text):
     #** for now to single account!!
     if len(the_text)>300:
@@ -61,12 +76,27 @@ def alg_mint_rule_text(the_text):
     Eth,Contract=common_load_PolicyRegistry()
     b=['just_one_rule_dev']
     if 'just_one_rule_dev' in b:
-        #** see create in test_mint_comment()
-        params=[]
-        params+=[('sample_name_1','string')] #name string
-        params+=[('sample_url_1','string')] #image string/url
-        params+=[('sample_wiki_1',the_text)] #wiki string/url
-        txn_receipt=Eth.run_function(Contract,'createPolicy',params=params)
+        #UPDATE OR CREATE?
+        ## Local helper function to see if any value at address (use create or update)
+        address=Eth.active_account
+        response_list=Eth.run_function(Contract,'getPolicy',params=[(address,'address')],is_call=True)
+        if response_list[0]: is_exists=True
+        else: is_exists=False
+
+        if not is_exists:
+            #** see create in test_mint_comment()
+            params=[]
+            params+=[('sample_name_1','string')] #name string
+            params+=[('sample_url_1','string')] #image string/url
+            params+=[(the_text,'string')] #wiki string/url
+            txn_receipt=Eth.run_function(Contract,'createPolicy',params=params)
+
+        else: ## Update
+            params=[(the_text,'string')] #name string
+            # updatePolicyWiki(string _wiki) public {
+            Eth.run_function(Contract,'updatePolicyWiki',params=params)
+
+
     return
 
 def common_load_PolicyRegistry():
@@ -101,15 +131,31 @@ def test_set_url():
     return
 
 
+def dev_target_exists(address,Eth,Contract):
+    ## Local helper function to see if any value at address (use create or update)
+    response_list=Eth.run_function(Contract,'getPolicy',params=[(address,'address')],is_call=True)
+    if response_list[0]: is_exists=True
+    else: is_exists=False
+    return is_exists
+
 def test_mint_comment():
     comment="https://www.amazon.com/DDT-Death-Dealer-Tactical-Assassin/dp/B00GHZCAUA/ref=sr_1_2?dchild=1&keywords=ddt&qid=1573341131&sr=8-2"
 
     Eth,Contract=common_load_PolicyRegistry()
     
     params=[]
-    b=['create']
-    b=['update']
     b=['view']
+    b=['update']
+    b=['create_or_update']
+    b=['create']
+
+    #CREATE OR UPDATE
+    is_exists=False
+    if 'create' in b:
+        is_exists=dev_target_exists(Eth.active_account,Eth,Contract)
+        if is_exists:
+            b.remove('create')
+            b+=['update']
 
     if 'create' in b:
         params+=[('sample_name_1','string')] #name string
@@ -139,12 +185,20 @@ def test_standalone_get_rules_texts():
     return
 
 
+def test_run_in_background():
+    the_text=''
+    alg_mint_rule_text_background(the_text)
+    return
+
+
 if __name__=='__main__':
     branches=['test_set_url']
     branches=['test_get_url']
-    branches=['test_mint_comment']
 
     branches=['test_standalone_get_rules_texts']
+    branches=['test_run_in_background']
+
+    branches=['test_mint_comment']
 
     for b in branches:
         globals()[b]()
