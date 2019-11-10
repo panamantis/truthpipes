@@ -57,7 +57,7 @@ chrome.browserAction.onClicked.addListener(async (tab) => {
 let assets = []
 
 function pingAPI(){
-	dev_endpoint="http://www.truthpipes.com:5000/get_rules"; // Can be local too
+	var dev_endpoint="http://www.truthpipes.com:5000/get_rules"; // Can be local too
     fetch(dev_endpoint)
     .then((resp) => resp.json()) // Transform the data into json
     .then(function(data) {
@@ -187,6 +187,7 @@ function applyCSSrules(rules) {
 //ok            var insertingCSS2 = chrome.tabs.insertCSS({code: css2});
         var css2 ="";
         var insertingCSS2="";
+        console.log("Applying css rules to tab...");
 
 
         var rules_list=rules["rules_list"];
@@ -210,6 +211,12 @@ function sendM(message_dict) {
 //        chrome.tabs.sendMessage(tabs[0].id, {action: "open_dialog_box"}, function(response) {});  
     	
     	    var tab_zero=tabs[0];
+
+    	    // Tab details
+        tabs.forEach(function(tab) {
+        	    console.log("Tab details: "+tab.id+" --> "+tab.url);
+        });
+
     	    if ((typeof tab_zero !== "undefined") && !(GLOBAL_SENT)) {
     	    	    console.log("Sending message to tab id: "+tab_zero.id);
     	    	    
@@ -226,18 +233,28 @@ function sendM(message_dict) {
             	
                 }
             );  
-            
-//ok            var css = "body { border: 20px dotted pink; }";
-//ok            var insertingCSS = chrome.tabs.insertCSS({code: css});
-
-            applyCSSrules(message_dict);
-
-            // insertingCSS.then(null, onError);
-              
     	    }
     	    else {
-    	    	    console.log("Waiting for tab...not yet found.");
+    	    	    console.log("[debug] GLOBAL_SENT: "+GLOBAL_SENT);
     	    }
+
+    	    // CSS injection
+    	    var IS_PAGE_RELOADED=true; // Add logic to check on reload  
+    	    //https://stackoverflow.com/questions/45139926/how-to-check-if-a-tab-has-been-reloaded-in-background-js
+    	    //https://stackoverflow.com/questions/16949810/how-can-i-run-this-script-when-the-tab-reloads-chrome-extension
+    	    
+    	    if ((typeof tab_zero !== "undefined") && (IS_PAGE_RELOADED)) {
+    	    	    console.log("Injecting CSS into tab id: "+tab_zero.url);
+
+//ok            var css = "body { border: 20px dotted pink; }";
+//ok            var insertingCSS = chrome.tabs.insertCSS({code: css});
+            applyCSSrules(message_dict);
+            // insertingCSS.then(null, onError);
+    	    }
+    	    else {
+    	    	    console.log("not injecting css for now");
+    	    }
+
     	console.log("background2 send message");
     });
 }
